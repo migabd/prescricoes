@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescrições - Repositório Médico</title>
+    <!-- Carregando Tailwind CSS para um design moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importando uma fonte do Google Fonts para melhor legibilidade -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* IMPORTANTE: Coloque a imagem no mesmo diretório que este arquivo HTML,
+               ou ajuste o caminho em 'url()' para o local correto. */
+            background-image: url('ec3768edd940456da6b8deeef4c51e99.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed; /* Efeito de parallax */
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Overlay escuro para garantir a legibilidade do texto sobre a imagem -->
+    <div class="absolute inset-0 bg-black bg-opacity-60"></div>
+
+    <!-- Conteúdo principal -->
+    <main class="relative z-10 flex items-center justify-center min-h-screen">
+        <div class="text-center p-8 max-w-3xl mx-auto">
+            <!-- Título Principal -->
+            <h1 class="text-5xl md:text-7xl font-bold mb-4" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.7);">
+                Prescrições
+            </h1>
+            
+            <!-- Subtítulo descritivo -->
+            <p class="text-lg md:text-xl mb-8 text-gray-200" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.7);">
+                Um repositório centralizado para modelos de prescrições, estudos de caso e recursos para profissionais e estudantes da área da saúde.
+            </p>
+            
+            <!-- Botão de Ação (Call to Action) -->
+            <a href="#" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 shadow-lg">
+                <!-- Ícone do GitHub em SVG -->
+                <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.165 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd"></path>
+                </svg>
+                Ver Repositório no GitHub
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>
