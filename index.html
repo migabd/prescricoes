@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Prescrições de Emergência</title>
+    <!-- Carrega o TailwindCSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a biblioteca de ícones Lucide -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide.js"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6; /* Um cinza-azulado bem claro */
+        }
+        /* Estilo para a notificação "toast" */
+        #toast {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .toast-show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast-hide {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        /* Melhora a renderização dos ícones */
+        [data-lucide] {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Cabeçalho Fixo com Barra de Pesquisa -->
+    <header class="sticky top-0 z-50 w-full bg-white shadow-md">
+        <div class="container mx-auto max-w-7xl px-4 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-bold text-blue-700">
+                    Guia de Prescrições de Emergência
+                </h1>
+                <div class="relative w-full md:w-1/3">
+                    <input type="text" id="search-bar" placeholder="Buscar por condição ou medicação..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <i data-lucide="search"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="container mx-auto max-w-7xl p-4 md:p-6">
+        <!-- Container para as prescrições -->
+        <div id="prescriptions-container">
+            <!-- As seções e cards serão injetados aqui pelo JavaScript -->
+        </div>
+
+        <!-- Mensagem de "Nenhum resultado" -->
+        <div id="no-results" class="hidden text-center py-16">
+            <h3 class="text-2xl font-semibold text-gray-700">Nenhum resultado encontrado</h3>
+            <p class="text-gray-500 mt-2">Tente ajustar seus termos de busca.</p>
+        </div>
+    </main>
+
+    <!-- Notificação "Toast" de Cópia -->
+    <div id="toast" class="toast-hide fixed bottom-6 right-6 z-50 bg-green-600 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-2">
+        <i data-lucide="check-circle"></i>
+        <span>Prescrição copiada!</span>
+    </div>
+
+    <!-- JavaScript Principal -->
+    <script>
+        // --- BASE DE DADOS COMPLETA ---
+        // Extraído e adaptado do PDF fornecido.
+        const database = [
+            // --- Sistema Cardiovascular ---
+            {
+                section: "Sistema Cardiovascular",
+                title: "Taquicardia Supraventricular (Estável)",
+                prescriptions: [
+                    {
+                        name: "Adenosina (1ª Dose)",
+                        text: "Adenosina (6mg/2ml) - 01 Ampola (dose 6mg)\nDose inicial: 01 ampola em bolus rapidamente seguida de flush de 20ml de SF 0,9% juntamente com elevação do membro."
+                    },
+                    {
+                        name: "Adenosina (2ª Dose)",
+                        text: "Na ausência de resposta → Dobrar a dose\nAdenosina (6mg/2ml) - 02 Ampolas (dose 12mg)"
+                    },
+                    {
+                        name: "Metoprolol (Opção)",
+                        text: "Metoprolol (5mg/5ml) - 01 ampola (dose 5mg)\nDose inicial: 2,5-5mg bolus EV 1 mg/minuto. Repetir até controle da FC, até a dose máxima de 15 mg (03 ampolas)."
+                    }
+                ],
+                notes: "#Bizu: Manobras vasovagais podem ser utilizadas. Evitar uso em pacientes com doenças pulmonares descompensadas. Deve ser feita na fossa cubital. Casos extremos podem cursar com assistolia, FV."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Taquicardia Supraventricular (Instável)",
+                prescriptions: [
+                    {
+                        name: "Cardioversão",
+                        text: "Pacientes com sinais de instabilidade devem ser submetidos à cardioversão."
+                    }
+                ],
+                notes: "Sinais de instabilidade: Hipotensão ou sinais de choque, rebaixamento do nível de consciência, dor torácica anginosa, e dispneia de origem cardíaca."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Taquicardia Ventricular (Estável)",
+                prescriptions: [
+                    {
+                        name: "Amiodarona (Ataque)",
+                        text: "Amiodarona (150 mg/3 ml) - 01 ampola (dose 150mg)\nDiluir 1 ampola em 100ml de SGI 5% e correr em 30min."
+                    },
+                    {
+                        name: "Amiodarona (Impregnação)",
+                        text: "Amiodarona (150 mg/3 ml) - 03 ampolas (dose 450mg)\nDiluir 3 ampolas em 230ml SGI 5% e correr em BIC a 16 ml/h nas primeiras 6 horas e 8 ml/h nas próximas 18horas."
+                    },
+                    {
+                        name: "Lidocaína 2% (Opção)",
+                        text: "Lidocaína 2% (20 mg/ml) - 01 ampola (400mg)\n1,5 mg/kg EV lento. Se falha, repetir 0,5 mg/kg da dose. Dose máxima: 3-4 mg/kg."
+                    },
+                    {
+                        name: "Metoprolol (Ambulatorial)",
+                        text: "Metoprolol (25, 50, 100mg) - comprimidos\n25 mg VO de 24/24h. Progredindo até a dose alvo de 100-200mg VO 24/24h."
+                    }
+                ],
+                notes: "#Bizu: O tratamento deve ser descontinuado no caso de aparecimento de bloqueio atrioventricular."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Taquicardia Ventricular (Instável)",
+                prescriptions: [
+                    {
+                        name: "Cardioversão",
+                        text: "Pacientes com sinais de instabilidade devem ser submetidos à cardioversão."
+                    }
+                ],
+                notes: "Sinais de instabilidade: Hipotensão ou sinais de choque, rebaixamento do nível de consciência, dor torácica anginosa, e dispneia de origem cardíaca."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Fibrilação Atrial e Flutter (Estável)",
+                prescriptions: [
+                    {
+                        name: "Amiodarona (Cardioversão Química)",
+                        text: "Amiodarona 150 mg/3 ml\nFazer dose de ataque de 5-7 mg/kg + SG 5% 100 ml EV em 30-60 min.\nDose de manutenção: 18ml (06 ampolas) + SG 5% 482 ml em BIC, 1 mg/min (33 ml/h) nas primeiras 6h e após 0,5 mg/min (16,6 ml/h) nas próximas 18h."
+                    },
+                    {
+                        name: "Metoprolol (Controle FC)",
+                        text: "Metoprolol 5 mg/5 ml\nFazer 1 ampola EV em 2 min; Pode ser repetida a cada 5 min, até a dose máxima de 20 mg (04 ampolas)."
+                    },
+                    {
+                        name: "Verapamil (Controle FC)",
+                        text: "Verapamil 5 mg/2 ml\nFazer de 1-2 ampolas EV em 2-5 min. Pode ser repetida após 30 min, até a dose máxima de 20 mg (04 ampolas).\nSeguido de manutenção de 80-160 mg VO 8/8h."
+                    },
+                    {
+                        name: "Deslanosídeo (Digital)",
+                        text: "Deslanosídeo 0,4mg/2ml\nFazer de 01 a 02 ampolas EV lentamente em 24h."
+                    }
+                ],
+                notes: "#Bizu: Lembrar da anticoagulação. Não proceder cardioversão em pacientes com FA crônica (>48h) sem realizar exclusão de trombo atrial."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Fibrilação Atrial e Flutter (Instável)",
+                prescriptions: [
+                    {
+                        name: "Cardioversão Elétrica",
+                        text: "Realizar cardioversão elétrica sincronizada."
+                    }
+                ],
+                notes: "#Bizu: Sinais de instabilidade: hipotensão ou choque, dispneia ou insuficiência respiratória, diminuição do nível de consciência ou dor precordial."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Fibrilação Atrial e Flutter (Pós-Cardioversão)",
+                prescriptions: [
+                    {
+                        name: "Amiodarona (VO)",
+                        text: "Amiodarona 100 mg\nTomar 03 comprimidos (300mg) VO de 12/12h. Preferível em pacientes com insuficiência cardíaca."
+                    },
+                    {
+                        name: "Propafenona (VO)",
+                        text: "Propafenona 300 mg\nTomar 01 comprimido VO de 12/12h. Preferível em pacientes sem doença cardíaca estrutural."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "Síndrome Coronariana Aguda (SCA)",
+                prescriptions: [
+                    {
+                        name: "AAS (VO)",
+                        text: "AAS 100mg\nTomar 03 comprimidos, dose de ataque; seguido de 01 comprimido de 24/24h."
+                    },
+                    {
+                        name: "Ticagrelor (VO)",
+                        text: "Ticagrelor 90 mg\nTomar 02 comprimidos dose de ataque; seguido de 01 comprimido de 12/12h."
+                    },
+                    {
+                        name: "Clopidogrel (VO - SEM SUPRA)",
+                        text: "Clopidogrel 75mg (Pacientes SEM SUPRA)\n• Tomar 4 comprimidos (300mg), dose única. Seguido de 1 comprimido de 24/24h.\n• Se paciente for para ICP (angioplastia), fazer bolus de 600mg."
+                    },
+                    {
+                        name: "Clopidogrel (VO - COM SUPRA)",
+                        text: "Clopidogrel 75mg (Pacientes COM SUPRA)\n• Tomar 4 comprimidos (300mg), dose única, salvo pacientes > 75 anos (75mg).\n• Se paciente for para ICP (angioplastia): 8 comprimidos (600mg)."
+                    },
+                    {
+                        name: "Atorvastatina (VO)",
+                        text: "Atorvastatina 40mg\nTomar 1 comprimido de 24/24h."
+                    },
+                    {
+                        name: "Isordil (SL)",
+                        text: "Isordil (Mononitrato de isossorbida) 5mg\nTomar 1 comprimido sublingual se dor torácica. Pode ser repetido a cada 5 minutos mais 2 vezes."
+                    },
+                    {
+                        name: "Enoxaparina (SC)",
+                        text: "Enoxaparina 60mg\nAplicar 1 ampola (lmg/kg) de 12/12h.\n* Se idade > 75 anos, reduzir a dose para 0,75 mg/kg SC de 12/12h.\n** Pacientes com ClCr < 30 ml/min, usar metade da dose."
+                    },
+                    {
+                        name: "Nitroglicerina [Tridil] (IV)",
+                        text: "Nitroglicerina [Tridil] 25mg/5ml\nDiluir 1 ampola em 230 ml de SF 0,9% e correr em BIC em caso de dor torácica persistente ou sinais congestivos. Iniciar dose baixa: ex: 5 ml/h."
+                    },
+                    {
+                        name: "Metoprolol (IV)",
+                        text: "Metoprolol 5mg\nFazer 1 ampola EV a cada 5 minutos (máximo de 3 doses)."
+                    },
+                    {
+                        name: "Alteplase (Trombólise IV)",
+                        text: "Alteplase 1 mg/ml (Dose máxima: 100 mg)\nFazer Bolus de 15 mg, depois 0,75 mg/Kg durante 30 min (máx 50 mg) e depois mais 0,50 mg/kg durante 60 min (máx 35 mg)."
+                    }
+                ],
+                notes: "#Bizu: Não usar nitrato em paciente com IAM de ventrículo direito ou uso de Sildenafil/Tadalafil nas últimas 24/48h. Adicionar O2 se Sat < 90%. Atentar para contraindicações de trombólise."
+            },
+            {
+                section: "Sistema Cardiovascular",
+                title: "ICAD / Edema Agudo de Pulmão (EAP)",
+                prescriptions: [
+                    {
+                        name: "Furosemida (IV)",
+                        text: "Furosemida (20 mg/2 ml) IV\nDose de Ataque: 1,0 a 1,5 mg/kg\nDose de Manutenção: mesma dosagem utilizada, distribuída em 24h."
+                    },
+                    {
+                        name: "Nitroprussiato (Nipride) (IV)",
+                        text: "Nitroprussiato de Sódio (50 mg/2 ml) IV\nDiluir 1 ampola (2ml) em 248ml SF 0,9% (Conc: 200mcg/ml) e infundir em BIC inicialmente a 5 ml/h e titular.\n(Dose inicial: 0,25 a 0,5mcg/kg/min)"
+                    },
+                    {
+                        name: "Nitroglicerina (Tridil) (IV)",
+                        text: "Nitroglicerina (Tridil) (50mg/10ml) IV\nDiluir 1 ampola (10ml) em 240ml SF 0,9% (Conc: 200mcg/ml) e infundir em BIC inicialmente a 1-2ml/h e titular.\n(Dose inicial: 5 mcg/min)."
+                    },
+                    {
+                        name: "Dobutamina (IV - Diluição 1)",
+                        text: "Dobutamina (250mg/20ml) IV\nDiluir 4 ampolas (80ml) em 170 ml SF 0,9% (Conc: 4mg/ml) e infundir em BIC inicialmente a 2ml/h\n(Dose usual: 2 a 20mcg/kg/min)"
+                    },
+                    {
+                        name: "Dobutamina (IV - Diluição 2)",
+                        text: "Dobutamina (250mg/20ml) IV\nDiluir 2 ampolas (40ml) em 210 ml SF 0,9% (Conc: 2mg/ml) e infundir em BIC inicialmente a 4ml/h\n(Dose usual: 2 a 20mcg/kg/min)"
+                    }
+                ],
+                notes: "#Bizu: Abordagem depende do perfil (perfusão/congestão). Realizar Ventilação não invasiva (VNI). Morfina não é mais usada de rotina."
+            },
+            // --- Sistema Nervoso ---
+            {
+                section: "Sistema Nervoso",
+                title: "Cefaleia Primária",
+                prescriptions: [
+                    {
+                        name: "Cetoprofeno (IV)",
+                        text: "Cetoprofeno [Profenid] (100mg/2ml) - 01 ampola\nDiluir 01 ampola em 100mL de SF 0,9% e correr em 20 minutos."
+                    },
+                    {
+                        name: "Dexametasona (IV/IM)",
+                        text: "Dexametasona (10mg/2,5ml) - 01 ampola\nFazer 01 ampola EV bólus ou IM."
+                    },
+                    {
+                        name: "Ibuprofeno (VO)",
+                        text: "Ibuprofeno 400mg\nTomar 01 comprimido de até 6/6h."
+                    },
+                    {
+                        name: "Dipirona (VO)",
+                        text: "Dipirona [Novalgina] 1g\nTomar 01 comprimido de 6/6h."
+                    },
+                    {
+                        name: "Paracetamol (VO)",
+                        text: "Paracetamol [Tylenol] 750g\nTomar 01 comprimido de 8/8h. (6/6h se 500mg - Dose Máx 4g)"
+                    }
+                ],
+                notes: "Obs: Atentar para possibilidade de cefaleia por abuso de analgésicos."
+            },
+            {
+                section: "Sistema Nervoso",
+                title: "Enxaqueca",
+                prescriptions: [
+                    {
+                        name: "Sumatriptano (SC)",
+                        text: "Sumatriptano [Sumax] 6mg/0,5ml - 1 ampola\nAplicar 6mg no subcutâneo, podendo ser aplicada nova injeção SC de 6 mg após 1h. (Máx 2 ampolas/dia)."
+                    },
+                    {
+                        name: "Opção: Cetoprofeno + Dexa (IV/IM)",
+                        text: "Cetoprofeno [Profenid] (100mg/2ml) - 01 ampola\nDiluir 01 ampola em 100mL de SF 0,9% e correr em 20 min.\n+\nDexametasona (10mg/2,5ml) - 01 ampola EV bólus ou IM."
+                    },
+                    {
+                        name: "Sumaxpro (VO)",
+                        text: "Sumatriptano + Naproxeno [Sumaxpro®] 50/500mg\nTomar 01 comprimido no início da crise. Se ausência de melhora, repetir dose após 2h. (Máx 2 cp/dia)."
+                    },
+                    {
+                        name: "Naproxeno (VO)",
+                        text: "Naproxeno [Flanax] 500mg\nTomar 01 comprimido de até 12/12h."
+                    }
+                ],
+                notes: "#Bizu: Sumatriptano SC é pouco disponível no PS. Atentar para cefaleia por abuso de analgésicos."
+            },
+            {
+                section: "Sistema Nervoso",
+                title: "Vertigem",
+                prescriptions: [
+                    {
+                        name: "Dramin B6 (IV)",
+                        text: "Dimenidrato + Piridoxina [Dramin B6] 50mg\nFazer EV de 6/6h."
+                    },
+                    {
+                        name: "Dimenidrato (VO)",
+                        text: "Dimenidrato 50mg\nTomar 01 comprimido de 4/4 ou 6/6h."
+                    },
+                    {
+                        name: "Cinarizina (VO)",
+                        text: "Cinarizina [Fluxon] 25mg\nTomar 01 comprimido de 8/8h."
+                    },
+                    {
+                        name: "Meclozina (VO)",
+                        text: "Meclozina [Meclin] 50mg\nTomar 01 comprimido de 8/8h."
+                    }
+                ],
+                notes: "#Bizu: Medicamentos para suprimir sistema vestibular: anti-histamínicos, benzodiazepínicos e antieméticos."
+            },
+            {
+                section: "Sistema Nervoso",
+                title: "Crise Convulsiva",
+                prescriptions: [
+                    {
+                        name: "Esquema Inicial (EV)",
+                        text: "Diazepam (10 mg/2 ml)\nFazer 01 ampola IV em bólus lentamente."
+                    },
+                    {
+                        name: "Esquema Inicial (IM)",
+                        text: "Midazolam 10mg\nFazer 01 ampola IM (na falta de acesso venoso)."
+                    },
+                    {
+                        name: "Refratário após 5 min",
+                        text: "Repetir Benzodiazepínico:\nDiazepam (10 mg/2 ml) - Fazer 01 ampola IV bólus lento.\nOU\nMidazolam 10mg - Fazer 01 ampola IM."
+                    },
+                    {
+                        name: "Refratário após 10 min",
+                        text: "Fenitoína [Hidantal] 250 mg/5 ml\nDlluir 02 ampolas em 40 ml de NaCL 0,9% (conc: 10mg/ml). Fazer 5-10 mg/kg = 0,5-1 ml/kg."
+                    },
+                    {
+                        name: "Refratário (Opção 2)",
+                        text: "Fenobarbital 200mg/2ml\nDiluir 05 ampolas em 90 ml de NaCL 0,9% (conc: 10mg/ml). Fazer 10 mg/kg = 1 ml/kg."
+                    },
+                    {
+                        name: "Refratariedade (IOT)",
+                        text: "Proceder à intubação orotraqueal.\nMidazolam (BIC): Ataque 0,2 mg/kg EV. Manutenção: 0,1-0,4 mg/kg/h.\n+\nPropofol (BIC): Ataque 1-2 mg/kg EV. Manutenção: 5-10 mg/kg/h."
+                    }
+                ]
+            },
+            // --- Sistema Respiratório ---
+            {
+                section: "Sistema Respiratório",
+                title: "Otite Média Aguda",
+                prescriptions: [
+                    {
+                        name: "Amoxi + Clavulanato (875mg)",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 20 comprimidos\nTomar 01 comprimido de 12/12h por 10 dias."
+                    },
+                    {
+                        name: "Amoxi + Clavulanato (500mg)",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (500+125 mg) - 30 comprimidos [SUS]\nTomar 01 comprimido de 8/8h por 10 dias."
+                    },
+                    {
+                        name: "Falha Terapêutica",
+                        text: "Cefuroxima [Zinnat®] 500 mg - 20 comprimidos\nTomar 01 comprimido de 12/12 horas, por 10 dias."
+                    },
+                    {
+                        name: "Alergia a Penicilinas",
+                        text: "Azitromicina 500 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias.\nOU\nClaritromicina 500 mg - 20 comprimidos\nTomar 01 comprimido de 12/12 horas, por 10 dias."
+                    }
+                ],
+                notes: "#Bizu: Sinais de falha terapêutica: Febre, otalgia e otorreia persistentes após 48-72h. Prescrever analgesia e lavagem nasal."
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "Sinusite",
+                prescriptions: [
+                    {
+                        name: "Amoxi + Clavulanato",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 20 comprimidos\nTomar 01 comprimido de 12/12h por 10 dias."
+                    },
+                    {
+                        name: "Alergia a Penicilinas",
+                        text: "Levofloxacino 750 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias."
+                    },
+                    {
+                        name: "Sintomáticos",
+                        text: "Dipirona [Novalgina] 1g - Tomar 01 comprimido de 6/6h, se dor ou febre.\n+\nPrednisolona 20mg - Tomar 02 comprimidos de manhã por 5 dias.\n+\nBudesonida 32mcg/jato - Aplicar 02 jatos em cada narina de 12/12h por 10 dias."
+                    }
+                ],
+                notes: "#Bizu: 3 marcadores para sinusite bacteriana: 1. Muco com cor alterada; 2. Dor local intensa; 3. Febre > 38°C; 4. PCR/VHS elevado; 5. Piora de sintomas."
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "Faringoamigdalite",
+                prescriptions: [
+                    {
+                        name: "Penicilina Benzatina (IM)",
+                        text: "Penicilina benzatina [Benzetacil] 1,2 milhões UI\nFazer Intramuscular dose única."
+                    },
+                    {
+                        name: "Amoxi + Clavulanato (VO)",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 20 comprimidos\nTomar 01 comprimido de 12/12h por 10 dias."
+                    },
+                    {
+                        name: "Alergia a Penicilinas",
+                        text: "Azitromicina 500 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias."
+                    },
+                    {
+                        name: "Sintomáticos",
+                        text: "Dipirona [Novalgina] 1g - Tomar 01 comprimido de 6/6h, se dor ou febre.\nIbuprofeno 400mg - Tomar 01 comprimido de até 6/6h.\nPrednisolona 20mg - Tomar 03 comprimidos de manhã por 3 dias."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "Crise Asmática",
+                prescriptions: [
+                    {
+                        name: "Leve e Moderada",
+                        text: "Salbutamol spray [Aerolin] 100mcg/jato\nFazer 4 jatos de 20/20min na primeira hora e 4 jatos de 2/2h após controle.\n+\nPrednisolona 20mg\nTomar 03 comprimidos de manhã por 5 dias."
+                    },
+                    {
+                        name: "Grave",
+                        text: "Salbutamol spray [Aerolin] 100mcg/jato\nFazer 4-10 jatos de 20/20 min na primeira hora, seguidos de 1/1h se broncoespasmo intenso e a cada 2 a 6 horas após controle.\n+\nIpratrópio [Atrovent] 25 mcg/jato\nFazer 4 jatos de 20/20 min na primeira hora, seguidos de 1/1h se broncoespasmo intenso e a cada 2 a 6 horas após controle.\n+\nHidrocortisona 500mg\nDiluir em 10ml de ABD. Para dose de ataque."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "DPOC (Exacerbação)",
+                prescriptions: [
+                    {
+                        name: "Corticóide (VO)",
+                        text: "Prednisolona 20mg\nTomar 02 comprimidos de manhã por 7 dias."
+                    },
+                    {
+                        name: "Broncodilatadores (Inalatório)",
+                        text: "Salbutamol spray [Aerolin] 100mcg/jato\nFazer inalação de 2 jatos de 4/4h ou 6/6h por 7 dias.\n+\nIpratrópio spray [Atrovent] 25 mcg/jato\nFazer inalação de 2 jatos de 6/6h por 7 dias."
+                    },
+                    {
+                        name: "Antibiótico (Opção 1)",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 14 comprimidos\nTomar 01 comprimido de 12/12h por 7 dias."
+                    },
+                    {
+                        name: "Antibiótico (Opção 2)",
+                        text: "Azitromicina 500 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias."
+                    },
+                    {
+                        name: "Risco para Pseudomonas",
+                        text: "Levofloxacino 750 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "Pneumonia",
+                prescriptions: [
+                    {
+                        name: "Sem comorbidades, sem ATB recente",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 14 comprimidos\nTomar 01 comprimido de 12/12h por 7 dias.\nOU\nAzitromicina 500 mg - 05 comprimidos\nTomar 01 comprimido de 24/24 horas, por 5 dias.\n+\nDipirona [Novalgina] 1g - Tomar 01 comprimido de 6/6h, se dor ou febre."
+                    },
+                    {
+                        name: "Com fatores de risco / Grave / ATB recente",
+                        text: "Amoxicilina+Clavulanato [Clavulin®] (875+125 mg) - 14 comprimidos\nTomar 01 comprimido de 12/12h por 7 dias.\n+\nAzitromicina 500 mg - 07 comprimidos\nTomar 01 comprimido de 24/24 horas, por 7 dias.\n+\nDipirona [Novalgina] 1g - Tomar 01 comprimido de 6/6h, se dor ou febre."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Respiratório",
+                title: "TVP e TEP",
+                prescriptions: [
+                    {
+                        name: "Profilaxia (SC)",
+                        text: "Enoxaparina [Clexane®] 40mg/0,4ml - 1 seringa preenchida\nAplicar 01 seringa de 24/24h (Ou 0,5mg/kg)."
+                    },
+                    {
+                        name: "Terapêutico (SC)",
+                        text: "Enoxaparina [Clexane®] 40mg/0,4ml - 2 seringas preenchidas\nAplicar 02 seringas de 12/12h (Ou 1mg/kg 12/12h)."
+                    },
+                    {
+                        name: "Terapêutico (Heparina NF)",
+                        text: "Heparina não fracionada 25.000 UI/5 ml\nDiluir 5 ml (25.000 UI) em SF 0,9% 245 mL (conc: 100 Ul/mL).\nDose de ataque de 80 Ul/kg EV. Seguido de manutenção de 18 Ul/kg/hora EV, em BI.\n(Controle pelo PTTa 1,5-2x)."
+                    },
+                    {
+                        name: "Terapêutico (VO)",
+                        text: "Rivaroxabana 15 mg - contínuo\nTomar 01 comprimido VO de 12/12 horas, por 3 semanas.\nApós 20 mg de 24/24 horas, por no mínimo 3 meses."
+                    }
+                ]
+            },
+            // --- Sistema Gastrointestinal ---
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Diarreia Aguda (Não Infecciosa)",
+                prescriptions: [
+                    {
+                        name: "Probiótico",
+                        text: "Floratil® (200mg/cp)\nTomar 01 comprimido de 12/12h por 3 dias."
+                    },
+                    {
+                        name: "Antidiarreico",
+                        text: "Racecadotrila [Tiorfan®] (100mg/cp)\nTomar 01 comprimido de 12/12h ou 8/8h enquanto permanecer a diarreia (Dose máx 400mg)."
+                    },
+                    {
+                        name: "Hidratação Oral",
+                        text: "Sais para reidratação oral (Rehidrat®)\nDiluir 1 envelope em 500ml de água e beber durante todo o dia."
+                    }
+                ],
+                notes: "#Bizu: Racecadotrila pode ser usada em diarreias agudas (diferente da loperamida). Suspender cafeína, leite."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Diarreia Aguda (Infecciosa)",
+                prescriptions: [
+                    {
+                        name: "Antibioticoterapia",
+                        text: "Medidas acima associadas à:\nCiprofloxacino 500mg - 10 comprimidos\nTomar 01 comprimido de 12/12h por 5 dias.\n+\nMetronidazol 400mg - 21 comprimidos\nTomar 01 comprimido de 8/8h por 7 dias."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Hemorragia Digestiva Alta (Varicosa)",
+                prescriptions: [
+                    {
+                        name: "IBP",
+                        text: "Omeprazol (40mg/10ml)\nFazer 01 ampola (40mg) de 12/12h. Suspender após EDA se não houver indicação."
+                    },
+                    {
+                        name: "Vasoativo",
+                        text: "Terlipressina (1mg/1ml)\nFazer 02 mg (02 amp) EV em bolus + 01 ampolas 4/4h.\nOU\nOctreotide (0,5mg/ml)\nDiluir 01 ampola em 250ml de SF 0,9%, fazer 50 mcg EV em bólus e infusão contínua de 50 mcg/h EV."
+                    },
+                    {
+                        name: "Antiemético",
+                        text: "Ondansetrona (4mg/ml) - 01 ampola\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min, de 8/8 horas."
+                    },
+                    {
+                        name: "Profilaxia de PBE",
+                        text: "Ceftriaxona [Rocefim®] 1g\nAplicar 01 ampola (1g) EV de 24/24 horas, por 7 dias.\n(Opções: Ciprofloxacino ou Norfloxacino)."
+                    },
+                    {
+                        name: "Profilaxia de Encefalopatia",
+                        text: "Lactulose 667mg/ml\nIniciar com 20-40 ml de 12/12h e ajustar para 2-3 evacuações diárias se sinais de encefalopatia."
+                    }
+                ],
+                notes: "#Bizu: Prioridade é estabilização hemodinâmica. EDA nas primeiras 12-24 horas. Atentar para sinais de choque."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Hemorragia Digestiva Alta (Não Varicosa)",
+                prescriptions: [
+                    {
+                        name: "IBP",
+                        text: "Omeprazol (40 mg/10 ml)\nFazer 01 ampola (40mg) de 12/12h. Suspender após EDA se não houver indicação."
+                    },
+                    {
+                        name: "Antiemético",
+                        text: "Ondansetrona (4mg/ml) - 01 ampola\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min, de 8/8 horas."
+                    }
+                ],
+                notes: "#Bizu: Prioridade é estabilização hemodinâmica. EDA nas primeiras 24 horas. Atentar para sinais de choque."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Hemorragia Digestiva Baixa",
+                prescriptions: [
+                    {
+                        name: "Medidas Gerais",
+                        text: "Dieta suspensa\nOmeprazol (40 mg/10 ml) - Fazer 01 ampola (40mg) de 12/12h.\nOndansetrona (4mg/ml) - 01 ampola - Diluir 01 ampola em 100ml de SF 0,9% e correr em 20 min, de 8/8 horas."
+                    }
+                ],
+                notes: "#Bizu: Prioridade é estabilização hemodinâmica. Atentar para sinais de choque."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Encefalopatia Hepática",
+                prescriptions: [
+                    {
+                        name: "Lactulose",
+                        text: "Lactulose 667mg/ml\nIniciar com 20-40 ml de 12/12h e ajustar para 2-3 evacuações diárias."
+                    },
+                    {
+                        name: "Antibiótico (Opção 1)",
+                        text: "Metronidazol 400mg\nTomar 01 comprimido de 8/8h por 14 dias."
+                    },
+                    {
+                        name: "Antibiótico (Opção 2)",
+                        text: "Rifaximina 550mg\nTomar 01 comprimido de 12/12h por 14 dias."
+                    },
+                    {
+                        name: "Antiemético",
+                        text: "Ondansetrona (4mg/ml)\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min, de 8/8 horas."
+                    }
+                ],
+                notes: "Orientações: Cabeceira elevada, curva térmica, sinais vitais 6/6 horas."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Pancreatite Aguda",
+                prescriptions: [
+                    {
+                        name: "Hidratação",
+                        text: "Dieta suspensa\nCloreto de sódio 0,9% - Fazer 3 ml/kg/h EV por 8 a 12 horas.\nRinger lactato - Se hipotensão 20-30 ml/kg EV em 30 min."
+                    },
+                    {
+                        name: "Analgesia (Escalonada)",
+                        text: "Dipirona 1g/2ml - 01 ampola\nFazer 01 ampola EV em bolus lento, de 6/6 horas.\n+\nTramadol 100mg/2ml - 01 ampola\nDiluir 01 ampola em 100 ml SF 0,9% e fazer IV em 30 min, de 8/8 horas.\n+\nMorfina (10mg/ml) - 01 ampola\nDiluir 01 ampola em 10ml de ABD e fazer 4-5ml, de 6/6 horas."
+                    },
+                    {
+                        name: "Antiemético",
+                        text: "Ondansetrona (4mg/ml) [Vonau®] - 01 ampola\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min, de 8/8 horas."
+                    },
+                    {
+                        name: "Profilaxia TVP",
+                        text: "Enoxaparina 40mg\nAplicar 01 ampola de 24/24 horas."
+                    },
+                    {
+                        name: "Se Infecção",
+                        text: "Meropenem (1g)\nDiluir em 10 ml de ABD e fazer EV de 8/8h."
+                    }
+                ],
+                notes: "Orientações: Solicitar exames para Score de Ranson. Observar sinais infecciosos, choque, falências orgânicas."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Colangite",
+                prescriptions: [
+                    {
+                        name: "Analgesia (Escalonada)",
+                        text: "Dipirona 1g/2ml - 01 ampola\nFazer 01 ampola EV em bolus lento, de 6/6 horas.\n+\nTramadol 100mg/2ml - 01 ampola\nDiluir 01 ampola em 100 ml SF 0,9% e fazer IV em 30 min, de 8/8 horas.\n+\nMorfina (10mg/ml) - 01 ampola\nDiluir 01 ampola em 10ml de ABD e fazer 4-5ml, de 6/6 horas."
+                    },
+                    {
+                        name: "Monoterapia (ATB)",
+                        text: "Ciprofloxacino [Cipro®] 400mg/200ml\nAdministrar 01 bolsa EV 12/12 horas por 7-10 dias.\nOU\nPiperacilina + Tazobactam 4g+500mg\nAdministrar EV de 8/8 horas por 7-10 dias."
+                    },
+                    {
+                        name: "Terapia Associada (ATB)",
+                        text: "Metronidazol 5 mg/ml - Fazer 01 bolsa (500mg) EV de 8/8 horas por 7-10 dias.\n+\nCefepima 1g - Administrar 02 ampolas (2g) EV de 8/8 horas por 7-10 dias."
+                    },
+                    {
+                        name: "Profilaxia TVP",
+                        text: "Enoxaparina 40mg\nAplicar 01 ampola de 24/24 horas."
+                    }
+                ],
+                notes: "Orientações: Proceder para desobstrução da via biliar. Observar Pêntade de Reynolds (choque séptico)."
+            },
+            {
+                section: "Sistema Gastrointestinal",
+                title: "Refluxo Gastroesofágico",
+                prescriptions: [
+                    {
+                        name: "Tratamento Empírico (4-12 semanas)",
+                        text: "Omeprazol 20-40 mg\nTomar 01 comprimido de 24/24h, pela manhã em jejum, 30min antes de se alimentar. Ou fracionado 12/12h.\n+\nDomperidona 10mg\nTomar 01 comprimido de 8/8 horas.\n(Opção: Bromoprida 10mg)"
+                    }
+                ],
+                notes: "Orientações: Cabeceira elevada, não se alimentar antes de dormir, perda de peso, cessar tabagismo, evitar refeições volumosas e alimentos que agravam (café, chocolate, etc)."
+            },
+            // --- Sistema Hematológico ---
+            {
+                section: "Sistema Hematológico",
+                title: "Anemia Ferropriva",
+                prescriptions: [
+                    {
+                        name: "Reposição Parenteral (IV)",
+                        text: "Hidróxido Férrico [Noripurum] (100mg/5ml)\nDiluir de 5-10ml de noripurum em 250ml de SF 0,9% infundir em no mínimo 30 minutos.\nAplicar de 1 a 3 vezes por semana, conforme cálculo de deficiência de ferro."
+                    },
+                    {
+                        name: "Reposição Oral",
+                        text: "Sulfato ferroso 300 mg (60mg Ferro elementar)\nTomar 01 comprimido antes do café, almoço e jantar. Preferir alimentos ácidos concomitantes e evitar laticínios."
+                    }
+                ]
+            },
+            // --- Sistema Endocrino Metabólico ---
+            {
+                section: "Sistema Endocrino Metabólico",
+                title: "Cetoacidose Diabética / EHH",
+                prescriptions: [
+                    {
+                        name: "Hidratação Venosa",
+                        text: "Cloreto de sódio 0,9%\nFazer 15 a 20 mL/kg em 1h e após 100 mL/kg em 48h.\n(Se Na > 150 corrigido, usar SF 0,45%)."
+                    },
+                    {
+                        name: "Insulinoterapia (BIC)",
+                        text: "Apenas se K > 3,3 mEq/L.\nInsulina regular 100ui/ml\nDiluir 01 ml em SF 0,9% 100 mL (solução 1:1)\nDose de ataque (bolus): 0,1 a 0,15 Ui/Kg IV\nDose de manutenção: iniciar a 0,1 Ui/Kg/h em BIC."
+                    },
+                    {
+                        name: "Reposição de Potássio (K+)",
+                        text: "Se K < 3,3 - repor 10-30 mEq/L KCL\nSe K 3,3 a 5,2 - repor 10-20 mEq/L KCI\nSe K > 5,3 - não repor, mas acompanhar."
+                    }
+                ],
+                notes: "Monitorização: Glicemia capilar 1/1h. Taxa ideal de queda: 50-70 mg/dL em 1h. Se HGT < 200-250, reduzir infusão e adicionar SG 5%."
+            },
+            {
+                section: "Sistema Endocrino Metabólico",
+                title: "Controle Glicêmico (Hospitalar)",
+                prescriptions: [
+                    {
+                        name: "Bomba de Insulina (BIC)",
+                        text: "Apenas se hiperglicemias sintomáticas ou 2 glicemias > 180. (Objetivo 140-180 mg/dL)\nInsulina regular 100Ui/ml\nDiluir 01 ml (100Ui) em SF 0,9% 100 mL (solução 1:1)\nGlicemias > 180: programar BIC para 2ml/h\nGlicemias > 220: programar BIC para 4ml/h\n(Ajustar conforme glicemia capilar horária)."
+                    }
+                ],
+                notes: "Glicemia < 60: desligar bomba, adm 40ml SG 50%. Glicemia < 100: desligar bomba."
+            },
+            // --- Sistema Genito-Urinário ---
+            {
+                section: "Sistema Genito-Urinário",
+                title: "ITU Baixa (Cistite)",
+                prescriptions: [
+                    {
+                        name: "Nitrofurantoína",
+                        text: "Nitrofurantoína [Macrodantina®] 100 mg - 28 comprimidos\nTomar 01 comprimido VO de 6/6 horas, por 7 dias."
+                    },
+                    {
+                        name: "Fosfomicina",
+                        text: "Fosfomicina [Monouril®] (3 g/envelope) - 01 envelope\nTomar 01 envelope VO em dose única, ao deitar."
+                    },
+                    {
+                        name: "Bactrim",
+                        text: "Sulfametoxazol + Trimetoprima [Bactrim®] 800 + 160 mg - 10 comprimidos\nTomar 01 comprimido VO de 12/12 horas, por 3-5 dias."
+                    },
+                    {
+                        name: "Sintomático (Disúria)",
+                        text: "Fenazopiridina [Pyridium®] 200 mg - 01 caixa\nTomar 01 comprimido VO de 8/8 horas, se disúria."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "ITU Alta (Pielonefrite) - Não Complicada",
+                prescriptions: [
+                    {
+                        name: "Ciprofloxacino (EV)",
+                        text: "Ciprofloxacino [Cipro®] 400mg/200ml\nAdministrar 01 bolsa EV 12/12 horas por 10-14 dias."
+                    },
+                    {
+                        name: "Ceftriaxona (EV)",
+                        text: "Ceftriaxona [Rocefim®] 1g\nAplicar 01 ampola (1g) EV de 24/24 horas por 10-14 dias."
+                    },
+                    {
+                        name: "Ciprofloxacino (VO)",
+                        text: "Ciprofloxacino [Cipro®] 500 mg - 20 comprimidos\nTomar 01 comprimido VO de 12/12 horas, por 10 dias."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "ITU Alta (Pielonefrite) - Com Sepse",
+                prescriptions: [
+                    {
+                        name: "Piperacilina + Tazobactam",
+                        text: "Piperacilina + Tazobactam [Tazocin®] 4g + 500mg\nAdministrar EV de 8/8 horas por 10-14 dias."
+                    },
+                    {
+                        name: "Cefepima",
+                        text: "Cefepima 1g\nAdministrar EV de 12/12 horas por 10-14 dias."
+                    },
+                    {
+                        name: "Meropeném",
+                        text: "Meropeném 1g\nAdministrar 01 ampola EV de 8/8 horas por 10-14 dias."
+                    }
+                ],
+                notes: "#Bizu: Prescrever hidratação venosa, analgésicos, antitérmicos e antieméticos."
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Candidíase Vaginal",
+                prescriptions: [
+                    {
+                        name: "Clotrimazol (Intravaginal)",
+                        text: "Clotrimazol 50 mg/5g (creme) - 01 frasco\nAplicar 01 aplicador cheio (aprox 5g) endovaginal, ao deitar, durante 6 dias."
+                    },
+                    {
+                        name: "Miconazol (Intravaginal)",
+                        text: "Miconazol 2% (creme) - 02 frascos\nAplicar 01 aplicador cheio (aprox 5g) endovaginal, ao deitar, durante 14 dias."
+                    },
+                    {
+                        name: "Fluconazol (VO)",
+                        text: "Fluconazol 150mg - 01 comprimido\nTomar 01 comprimido dose única."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Vaginose",
+                prescriptions: [
+                    {
+                        name: "Metronidazol (VO)",
+                        text: "Metronidazol 250 mg - 28 comprimidos\nTomar 02 comprimidos de 12/12h por 7 dias."
+                    },
+                    {
+                        name: "Clindamicina (VO)",
+                        text: "Clindamicina 150 mg - 28 comprimidos\nTomar 02 comprimidos de 12/12h por 7 dias."
+                    }
+                ],
+                notes: "#Bizu: Em caso de recorrência utilizar metronidazol por 10-14 dias."
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Tricomoníase",
+                prescriptions: [
+                    {
+                        name: "Metronidazol (Dose Única)",
+                        text: "Metronidazol 400 mg - 5 comprimidos\nTomar 05 comprimidos (total de 2g) VO, dose única."
+                    },
+                    {
+                        name: "Metronidazol (7 dias)",
+                        text: "Metronidazol 250 mg - 28 comprimidos\nTomar 02 comprimidos de 12/12h por 7 dias."
+                    }
+                ],
+                notes: "#Bizu: Deve-se tratar os parceiros."
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Uretrite Gonocócica",
+                prescriptions: [
+                    {
+                        name: "Terapia Dupla",
+                        text: "Ceftriaxona (500mg/2ml) [Rocefin®] - 01 ampola\nAplicar 01 ampola IM, dose única.\n+\nAzitromicina 500mg - 02 comprimidos (1g)\nTomar 02 comprimidos em dose única.\n(Opção à Azitro: Doxiciclina 100mg 12/12h por 7d)"
+                    }
+                ]
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Uretrite Não Gonocócica",
+                prescriptions: [
+                    {
+                        name: "Azitromicina (Dose Única)",
+                        text: "Azitromicina 500mg [Astro®] - 02 comprimidos (1g)\nTomar 02 comprimidos em dose única."
+                    },
+                    {
+                        name: "Doxiciclina (7 dias)",
+                        text: "Doxiciclina 100 mg - 14 comprimidos\nTomar 01 comprimido VO de 12/12 horas, por 7 dias."
+                    }
+                ]
+            },
+            {
+                section: "Sistema Genito-Urinário",
+                title: "Ureterolitíase (Cólica Nefrética)",
+                prescriptions: [
+                    {
+                        name: "Analgesia (IV)",
+                        text: "Cetoprofeno [Profenid®] (100mg/2ml) - 1 ampola\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min.\n+\nDipirona (lg/2ml) - 01 ampola\nFazer 01 ampola EV em bolus lento."
+                    },
+                    {
+                        name: "Opioide (IV)",
+                        text: "Morfina (10 mg/ml) - 01 ampola\nDiluir 01 ampola em 10ml de ABD e fazer 4-5ml."
+                    },
+                    {
+                        name: "Antiemético (IV)",
+                        text: "Ondansetrona (4mg/ml) [Vonau®] - 01 ampola\nDiluir 01 ampola em 100ml de SF 0,9% e correr em 20 min."
+                    },
+                    {
+                        name: "Terapia Expulsiva (VO)",
+                        text: "Tansulosina 0,4mg\nTomar 01 comprimido à noite por até 10 dias.\n(Opção: Nifedipino 10mg 8/8h por 10 dias)."
+                    }
+                ],
+                notes: "#Bizu: Orientar retorno se sinais de alarme. Cálculos > 10mm precisarão de cirurgia. Terapia expulsiva mais efetiva para 4-5mm."
+            },
+            // --- Sistema Osteomuscular ---
+            {
+                section: "Sistema Osteomuscular",
+                title: "Lombalgia Mecânica e Torcicolo",
+                prescriptions: [
+                    {
+                        name: "Analgesia (IV)",
+                        text: "Cetoprofeno [Profenid] 100mg/2ml - 01 ampola\nDiluir 01 ampola em 100mL de SF 0,9% e correr em 20 minutos.\n+\nDipirona 1g/2ml - 01 ampola\nFazer 01 ampola EV em bolus lento."
+                    },
+                    {
+                        name: "Opioide Fraco (IV)",
+                        text: "Tramadol 100mg/2ml - 01 ampola\nDiluir 01 ampola em 100 ml SF 0,9% e fazer IV em 30 min."
+                    },
+                    {
+                        name: "Relaxante Muscular + AINE (VO)",
+                        text: "Paracetamol 300 + Cafeína 30 + Carisoprodol 125 + Diclofenaco 50 [Torsilax, tandrilax]\nTomar 01 comprimido de 12/12h, ou até de 8/8h, por no máximo 7 dias."
+                    },
+                    {
+                        name: "Relaxante Muscular (VO)",
+                        text: "Ciclobenzaprina [Miosan] 10mg\nTomar 01 comprimido de 12/12h, por 5 dias."
+                    },
+                    {
+                        name: "AINE (VO)",
+                        text: "Cetoprofeno 150mg\nTomar 01 comprimido de até 12/12h, por no máximo 5 dias."
+                    }
+                ],
+                notes: "Orientações: Aplicar calor local 8/8h, repouso relativo, retirar fator de piora."
+            },
+            // --- Psiquiatria ---
+            {
+                section: "Psiquiatria",
+                title: "Acatisia",
+                prescriptions: [
+                    {
+                        name: "Propranolol",
+                        text: "Propranolol 10 mg VO 2 vezes ao dia.\nDose máxima 60 mg em 3 tomadas diárias.\n(Contraindicado em Asma/DPOC)."
+                    },
+                    {
+                        name: "Benzodiazepínico",
+                        text: "Clonazepam 0,5 a 2,5 mg/dia VO\nOU\nLorazepam 0,5 mg VO 2x ao dia (Dose máx 6-10 mg/dia)."
+                    }
+                ]
+            },
+            {
+                section: "Psiquiatria",
+                title: "Síndrome Psicótica",
+                prescriptions: [
+                    {
+                        name: "Haloperidol (VO)",
+                        text: "Haloperidol 1 a 5 mg VO\nDose máxima 40 mg/dia. (Atentar-se a síndromes extrapiramidiais)."
+                    },
+                    {
+                        name: "Haloperidol (IM)",
+                        text: "Haloperidol (5mg/ml) 2 a 4 mg IM (Dose: 0,4 a 0,5 ml)."
+                    },
+                    {
+                        name: "Risperidona (VO)",
+                        text: "Risperidona 2 a 8 mg VO\n(Se intolerantes ao haloperidol). Dose máxima: 16 mg/dia."
+                    },
+                    {
+                        name: "Olanzapina (VO)",
+                        text: "Olanzapina 10 a 20 mg VO\n(Se refratariedade e sintomas extrapiramidais). Dose máxima: 20 mg/dia."
+                    },
+                    {
+                        name: "Midazolam (Adjuvante)",
+                        text: "Midazolam 15 mg/1 ml\nAdministrar 0,5 ampola."
+                    }
+                ]
+            },
+            {
+                section: "Psiquiatria",
+                title: "Delirium (Misto ou Hiperativo)",
+                prescriptions: [
+                    {
+                        name: "Haloperidol (VO)",
+                        text: "Haloperidol 0,5-5 mg VO\nRepetir progredindo a dose de 30/30 min se necessário. Dose máxima: 5 mg/dia."
+                    },
+                    {
+                        name: "Haloperidol (IM/EV)",
+                        text: "Haloperidol 5 mg/ml IM ou EV\nAplicar 0,5 ampola de 30/30 min até estabilização (máx 3x)."
+                    },
+                    {
+                        name: "Risperidona (VO)",
+                        text: "Risperidona 0,5 a 6 mg/dia VO\nIniciar com 0,5 mg à noite e ajustar. Dose máxima: 6 mg/dia."
+                    },
+                    {
+                        name: "Quetiapina (VO)",
+                        text: "Quetiapina 12,5 a 150 mg/dia VO\nIniciar com 25 mg à noite e aumentar 50 mg conforme resposta. Dose máxima: 800 mg/dia."
+                    }
+                ],
+                notes: "#BIZU: Evitar haloperidol se QTc > 500ms. Realizar ECG antes."
+            },
+            {
+                section: "Psiquiatria",
+                title: "Agressividade e Agitação Psicomotora",
+                prescriptions: [
+                    {
+                        name: "Manejável Verbalmente (VO)",
+                        text: "Clorpromazina 25 mg VO\nAdministrar de 30 em 30 minutos até tranquilização. Dose máxima: 2g/dia."
+                    },
+                    {
+                        name: "Não Manejável (IM/EV)",
+                        text: "Haloperidol (1 ampola - 5 mg/ml) IM ou EV\nDose: 0,2 a 0,8 ml (1 a 4mg)\n+\nMidazolam (1 ampola - 15 mg/3 ml)\nDose: 0,5 ampola (7,5mg)"
+                    },
+                    {
+                        name: "Opção (IM/EV)",
+                        text: "Prometazina (1 ampola - 50mg/2ml)\nRealizar 1 ampola de 30 em 30 minutos por até 3 vezes se necessário."
+                    }
+                ]
+            },
+            {
+                section: "Psiquiatria",
+                title: "Síndrome Serotoninérgica",
+                prescriptions: [
+                    {
+                        name: "Casos Leves",
+                        text: "Diazepam 0,1 a 0,2 mg/Kg EV\nRepetir de 8/8h até desaparecimento dos sintomas."
+                    },
+                    {
+                        name: "Casos Moderados/Graves",
+                        text: "RL 20 a 30 ml/kg EV (Meta diurese 50-100 ml/h)\n+\nDiazepam 0,1 a 0,2 mg/Kg EV (Repetir 8/8h)\n+\nCiproeptadina 12 mg VO ou 2 mg SNG\n(Repetir 2mg a cada 2h. Dose máx 32 mg/dia)."
+                    }
+                ],
+                notes: "#BIZU: Retirada dos inibidores da recaptação de serotonina é fundamental. Evitar contenção mecânica (risco de rabdomiólise)."
+            },
+            {
+                section: "Psiquiatria",
+                title: "Síndrome Neuroléptica Maligna",
+                prescriptions: [
+                    {
+                        name: "Bromocriptina (VO/SNG)",
+                        text: "Bromocriptina 2 a 10 mg a cada 8 horas VO ou SNG.\nManter por até 10 dias com redução gradual. Dose máxima: 40 mg/dia."
+                    },
+                    {
+                        name: "Amantadina (VO/SNG)",
+                        text: "Amantadina 100 mg VO ou SNG (Alternativa à bromocriptina).\nDose máxima de 400 mg/dia."
+                    },
+                    {
+                        name: "Dantroleno Sódico (IV)",
+                        text: "Dantroleno sódico 1 a 10 mg/kg IV por 8 dias.\n(Se hipertermia ou extrema rigidez). Após 8d, mudar para VO por 7d.\nContraindicado em hepatopatia."
+                    }
+                ]
+            },
+            {
+                section: "Psiquiatria",
+                title: "Ansiedade Aguda e Crise de Pânico",
+                prescriptions: [
+                    {
+                        name: "Clonazepam (VO)",
+                        text: "Clonazepam 2 mg VO\n(Dose de manutenção 0,25 a 4 mg/dia)."
+                    },
+                    {
+                        name: "Lorazepam (VO)",
+                        text: "Lorazepam 0,5 a 2 mg VO\n(Dose de manutenção 2 a 3 mg/dia. Máx 10 mg/dia)."
+                    },
+                    {
+                        name: "Diazepam (VO)",
+                        text: "Diazepam 5 a 10 mg VO\n(Dose de manutenção 5 a 40 mg/dia)."
+                    }
+                ]
+            },
+            // --- Distúrbios Hidroeletrolíticos ---
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipercalemia",
+                prescriptions: [
+                    {
+                        name: "Se Repercussão ECG",
+                        text: "Gluconato de Cálcio 10% (Ampola 10 mL)\nDiluir 1 ampola em 50-100 mL de SF 0,9% e fazer EV em 3-5 minutos.\n(NÃO reduz o K, só estabiliza membrana)."
+                    },
+                    {
+                        name: "Nebulização",
+                        text: "Fenoterol gotas: 10-15 gotas em 5ml SF 0,9% nebulização 4/4h.\nOU\nSalbutamol gotas: 40 gotas em 3-5 mL SF 0,9% nebulização 4/4h."
+                    },
+                    {
+                        name: "Solução Polarizante",
+                        text: "Insulina Regular 10 UI + 100 mL de SG 50% (ou 500 mL de SG 10%)\nCorrer em BIC durante 1 hora. (Atenção à glicemia)."
+                    },
+                    {
+                        name: "Resina de Troca (VO)",
+                        text: "Poliestieronosulfonato de Cálcio (Sorcal, envelope 30g)\nDiluir 30g em 100ml de manitol 10% ou água e fazer VO de até 4/4 horas."
+                    },
+                    {
+                        name: "Diurético",
+                        text: "Furosemida (Ampola 20 mg/mL)\nInfundir 0,5-1 mg/kg IV de até 4/4 horas."
+                    }
+                ]
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipocalemia",
+                prescriptions: [
+                    {
+                        name: "Leve (K > 3,0) - VO",
+                        text: "KCI xarope 6% (60 mg/mL)\nTomar de 10 a 30 mL de 6/6 horas.\nOU\nKCI (6 mEq/cp ou 600 mg/cp)\nTomar 1 cp após as refeições 6/6 horas."
+                    },
+                    {
+                        name: "Moderada/Grave (K < 3,0) - IV",
+                        text: "KCI 10% (Ampola 10mL)\nDiluir 2 ampolas em 500ml de SF 0,9% e correr em 2-3h (Acesso periférico).\n(Em acesso central, concentrações maiores são aceitáveis, ex: 4 amp em 500mL)."
+                    }
+                ]
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hiponatremia",
+                prescriptions: [
+                    {
+                        name: "Passo 1: Solução Salina 3%",
+                        text: "Montar a solução salina 3% (513 mEq/L):\n890 mL de NaCl 0,9% + 110 mL de NaCl 20%."
+                    },
+                    {
+                        name: "Passo 2: Cálculo Variação",
+                        text: "Calcular Variação Esperada (para 1L de solução):\nVariação = ([Na Solução 513] - [Na Paciente]) / (ACT + 1)\n(ACT = Peso x 0,6 Homem; Peso x 0,5 Mulher. Ajustar para > 65 anos)."
+                    },
+                    {
+                        name: "Passo 3: Cálculo Volume (Regra de 3)",
+                        text: "1000 mL Solução 3% --- Variação (Passo 2)\nX mL Solução 3% --- 8 a 12 mEq/L (Variação máxima em 24h)"
+                    },
+                    {
+                        name: "Passo 4: Velocidade de Infusão",
+                        text: "Dividir o volume X (mL) encontrado no Passo 3 pelo número de horas (ex: 24h) para achar a velocidade da BIC (mL/h)."
+                    }
+                ]
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipernatremia",
+                prescriptions: [
+                    {
+                        name: "Passo 1: Volume",
+                        text: "Reposição de volume intravascular com Ringer Lactato ou SF 0,9%. Identificar e corrigir causa base (vômitos, diarreia)."
+                    },
+                    {
+                        name: "Passo 2: Cálculo Variação",
+                        text: "Calcular Variação Esperada (para 1L de solução):\nVariação = ([Na Solução] - [Na Paciente]) / (ACT + 1)\n([Na Solução] = 0 para SG 5%; 77 para SF 0,45%)."
+                    },
+                    {
+                        name: "Passo 3: Cálculo Volume (Regra de 3)",
+                        text: "1000 mL Solução (SG5% ou SF0,45%) --- Variação (Passo 2)\nX mL Solução --- 8 a 12 mEq/L (Variação máxima em 24h)"
+                    },
+                    {
+                        name: "Passo 4: Velocidade de Infusão",
+                        text: "Dividir o volume X (mL) encontrado no Passo 3 pelo número de horas (ex: 24h) para achar a velocidade da BIC (mL/h)."
+                    }
+                ],
+                notes: "OBS: Em hipernatremia crônica, visar queda de 0.5 mEq/L/h para evitar complicações."
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipocalcemia",
+                prescriptions: [
+                    {
+                        name: "Sintomática (IV)",
+                        text: "Gluconato de Cálcio 10% (Ampola 10 mL)\nDiluir 1 ampola em 50-100 mL de SF 0,9% e fazer IV em 1 hora.\n(Manutenção: 5 ampolas em 500 mL SF 0,9% IV em 5-10 horas)."
+                    },
+                    {
+                        name: "Assintomática (VO)",
+                        text: "Reposição via oral 1000-2600 mg/dia."
+                    }
+                ],
+                notes: "OBS: Se houver Hiperfosfatemia associada, corrigí-la primeiro."
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipercalcemia",
+                prescriptions: [
+                    {
+                        name: "Hidratação",
+                        text: "Hidratação venosa vigorosa com 200 a 500 mL/h (conforme tolerância). Pode-se associar diurético de alça APÓS volume."
+                    },
+                    {
+                        name: "Inibição Reabsorção Óssea",
+                        text: "Pamidronato 60-90 mg IV a cada 4 horas.\nOU\nÁcido Zoledrônico 4mg IV em 15 minutos."
+                    }
+                ]
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipomagnesemia",
+                prescriptions: [
+                    {
+                        name: "Torsades de Pointes",
+                        text: "Sulfato de Magnésio (10%) 2 ampolas (20mL) + Soro Glicosado 5% (100mL) IV por 2-5 minutos. Repetir se arritmia persistir."
+                    },
+                    {
+                        name: "Sintomas Graves (Tetania/Convulsão)",
+                        text: "ATAQUE: Sulfato de Magnésio (10%) 2 ampolas (20mL) + SG 5% (100mL) IV por 2-5 min.\nMANUTENÇÃO: Sulfato de Magnésio (10%) 4 ampolas (40mL) + SF 0,9% (460mL) IV em BIC durante 12-24h."
+                    },
+                    {
+                        name: "Grave (Mg < 1,0)",
+                        text: "Sulfato de Magnésio (10%) 4 ampolas (40mL) + SF 0,9% ou Glicosado 5% (460 mL) IV em 12-24 horas."
+                    }
+                ],
+                notes: "ATENÇÃO: Reposição máxima de 6g de Sulfato de Magnésio/dia (60 mL sol 10%), ou 3g se ClCr < 30."
+            },
+            {
+                section: "Distúrbios Hidroeletrolíticos",
+                title: "Hipermagnesemia",
+                prescriptions: [
+                    {
+                        name: "Medidas Gerais",
+                        text: "Interromper infusão de Mg. Ajustar dieta.\nFurosemida (Ampola 20 mg/mL): Infundir 0,5-1 mg/kg IV de até 4/4 horas."
+                    },
+                    {
+                        name: "Grave / Sintomática",
+                        text: "Gluconato de Cálcio 10% (Ampola 10 mL)\nDiluir 1 ampola em 50-100 mL de SF 0,9% e fazer EV em 3-5 minutos. Pode ser repetido."
+                    }
+                ]
+            },
+            // --- Infecções ---
+            {
+                section: "Infecções",
+                title: "Sífilis",
+                prescriptions: [
+                    {
+                        name: "Recente (Primária/Secundária)",
+                        text: "Penicilina Benzatina 1.200.000 U - 2 ampolas (Total 2.400.000 U)\nAplicar via IM 01 ampola em cada nádega (dose única)."
+                    },
+                    {
+                        name: "Recente (Opção Alergia)",
+                        text: "Doxiciclina 100 mg\nTomar 1 comprimido VO de 12/12 horas, por 15 dias (exceto gestantes)."
+                    },
+                    {
+                        name: "Tardia (Ignorada/Terciária)",
+                        text: "Penicilina Benzatina 1.200.000 U - 2 ampolas (Total 2.400.000 U)\nAplicar via IM 1 ampola em cada nádega, a cada 7 dias, total 3 aplicações (7.200.000 U)."
+                    },
+                    {
+                        name: "Tardia (Opção Alergia)",
+                        text: "Doxiciclina 100 mg\nTomar 1 comprimido VO de 12/12 horas, por 30 dias (exceto gestantes)."
+                    }
+                ]
+            },
+            {
+                section: "Infecções",
+                title: "Dengue (Grupo A/B)",
+                prescriptions: [
+                    {
+                        name: "Sintomáticos",
+                        text: "Dipirona 1g - Tomar 01 comprimido de 6/6h.\nOU\nParacetamol 750g - Tomar 01 comprimido de 8/8h."
+                    },
+                    {
+                        name: "Hidratação Oral",
+                        text: "Adultos: 60ml/kg/dia (2/3 líquidos livres, 1/3 solução salina).\nCrianças: <10kg: 130ml/kg/dia | 10-20kg: 100ml/kg/dia | >20kg: 80ml/kg/dia."
+                    }
+                ],
+                notes: "Orientações: NÃO prescrever salicilatos e AINEs. Orientar repouso."
+            },
+            {
+                section: "Infecções",
+                title: "Dengue (Grupo C)",
+                prescriptions: [
+                    {
+                        name: "Hidratação IV (Expansão)",
+                        text: "10ml/kg de Cloreto de Sódio 0,9% nas primeiras 2h. Repetir até 3x. (Máx 20ml/kg nas primeiras 2h)."
+                    },
+                    {
+                        name: "Hidratação IV (Manutenção)",
+                        text: "Fase 1: 25ml/kg de SF 0,9% em 6 horas.\nFase 2 (se melhora): 25ml/kg em 8 horas (sendo 2/3 de SG 50%)."
+                    },
+                    {
+                        name: "Sintomáticos",
+                        text: "Dipirona 1g/2ml - 01 ampola EV em bolus lento de 6/6h.\nOndansetrona (4mg/ml) - 01 ampola em 100ml SF 0,9% 8/8h.\nOmeprazol (40 mg/10 ml) - 01 ampola 24/24h."
+                    }
+                ],
+                notes: "Orientações: Glicemia capilar 4/4h, mensurar diurese, balanço hídrico."
+            },
+            {
+                section: "Infecções",
+                title: "Dengue (Grupo D)",
+                prescriptions: [
+                    {
+                        name: "Hidratação IV (Expansão)",
+                        text: "20 ml/kg de SF 0,9% ou Ringer Lactato em até 20 min. Repetir até 3 vezes."
+                    },
+                    {
+                        name: "Hidratação IV (Manutenção)",
+                        text: "Fase 1: 25ml/kg de SF 0,9% em 6 horas.\nFase 2 (se melhora): 25ml/kg em 8 horas (sendo 2/3 de SG 50%)."
+                    },
+                    {
+                        name: "Sintomáticos",
+                        text: "Mesmos do Grupo C: Dipirona, Ondansetrona, Omeprazol EV."
+                    }
+                ],
+                notes: "Importante: Avaliar necessidade de hemotransfusão, controle de coagulopatias, DVA."
+            },
+            {
+                section: "Infecções",
+                title: "Herpes Simples",
+                prescriptions: [
+                    {
+                        name: "Primoinfecção/Recorrência (VO)",
+                        text: "Aciclovir 400 mg - 30 comprimidos\nTomar 01 comprimido VO de 8/8h, por 5-10 dias.\nOU\nAciclovir 200 mg - 50 comprimidos\nTomar 01 comprimido VO 5x ao dia, por 5-10 dias."
+                    },
+                    {
+                        name: "Grave / Encefalite (IV)",
+                        text: "Aciclovir 250mg/frasco\nFazer 5-10 mg/kg EV de 8/8h.\n(Fazer 20 mg/kg EV de 8/8h se herpes neonatal ou encefalite)."
+                    },
+                    {
+                        name: "Terapia Supressiva Crônica (VO)",
+                        text: "(Se > 5 episódios/ano)\nAciclovir 400 mg\nTomar 01 comprimido VO de 12/12h, por 4-6 meses."
+                    }
+                ]
+            },
+            {
+                section: "Infecções",
+                title: "Conjuntivite",
+                prescriptions: [
+                    {
+                        name: "Viral",
+                        text: "Hialuronato de sódio colírio 1 mg/ml\nPingar 1 gota no olho acometido de 4/4h.\n(Se pseudomembrana, add Dexametasona colírio 0,1% 6/6h por 5d)."
+                    },
+                    {
+                        name: "Bacteriana Aguda",
+                        text: "Moxifloxacino Colírio 0,5%\nPingar 01 gota no olho acometido de 4/4h, por 7-14 dias.\nOU\nGatifloxacino Colírio 0,3%\nPingar 01 gota no olho acometido de 4/4h, por 7-14 dias.\n(Se pseudomembrana, add Dexametasona colírio)."
+                    }
+                ],
+                notes: "Orientações (Viral): Compressas geladas por 10 minutos de 6/6h."
+            },
+            // --- Anafilaxia e Alergias ---
+            {
+                section: "Anafilaxia e Alergias",
+                title: "Choque Anafilático",
+                prescriptions: [
+                    {
+                        name: "Adrenalina (IM)",
+                        text: "Adrenalina IM - 0,5 mg em pacientes com mais de 50kg.\n(Cada ampola de 1mL tem 1mg, então a dose é meia ampola).\nAplicar no músculo vasto lateral (face anterolateral da coxa)."
+                    },
+                    {
+                        name: "Doses Pediátricas/Peso",
+                        text: "• 25-50kg: 0,3 mg\n• 10-25kg: 0,15 mg\n• < 10kg: 0,01 mL/kg"
+                    }
+                ]
+            },
+            {
+                section: "Anafilaxia e Alergias",
+                title: "Alergias",
+                prescriptions: [
+                    {
+                        name: "Anti-histamínicos (VO)",
+                        text: "Loratadina 10mg - 01 cp via oral à noite por 5 a 7 noites.\nOU\nDesloratadina 5mg - 01 cp via oral 1-2x ao dia.\nOU\nHidroxizina 25mg - 01 cp via oral à noite."
+                    },
+                    {
+                        name: "Anti-histamínico (IM)",
+                        text: "Prometazina (50 mg/2mL)\n25mg IM - pode repetir após 2 horas.\n#Bizu: EVITAR prometazina IV pelo risco de gangrena por extravasamento."
+                    },
+                    {
+                        name: "Corticóide (IV/IM)",
+                        text: "Hidrocortisona (50 mg/2mL)\n1 ampola IV diluída em 100mL de SF 0,9% ou IM direto.\nOU\nDexametasona (4mg/mL)\n1 ampola IV diluída em 100mL de SF 0,9% ou IM direto."
+                    }
+                ]
+            },
+            // --- Intoxicação ---
+            {
+                section: "Intoxicação",
+                title: "Paracetamol",
+                prescriptions: [
+                    {
+                        name: "N-acetilcisteína (VO)",
+                        text: "Dose de ataque (140mg/Kg) diluído em 200ml de SGI 5% ou suco.\n+ 17 doses de manutenção (70mg/Kg) de 4/4hrs."
+                    },
+                    {
+                        name: "N-acetilcisteína (IV)",
+                        text: "Dose de ataque: 150mg/kg IV ao longo de 60 minutos.\nNa sequência: 50mg/kg IV ao longo das 4 horas seguintes.\nPor fim: 100mg/kg ao longo de 16 horas."
+                    }
+                ],
+                notes: "Bizus: Eficácia semelhante VO/IV. Preferir IV se vômitos ou rebaixamento. Eficácia aumenta MUITO se adm nas primeiras 8h. Indicações: +7,5g ingeridas ou sinais de injúria hepática."
+            },
+            {
+                section: "Intoxicação",
+                title: "Organofosforados/Carbamatos",
+                prescriptions: [
+                    {
+                        name: "Atropina (IV)",
+                        text: "Atropina (0.5 mg/mL)\nFazer 1-2 ampolas em bolus, conforme sintomas muscarínicos. Não há dose máxima estabelecida. Fazer até controle dos sintomas."
+                    }
+                ]
+            },
+            {
+                section: "Intoxicação",
+                title: "Cocaína",
+                prescriptions: [
+                    {
+                        name: "Midazolam (IV)",
+                        text: "Midazolam (1mg/ml)\nPode aplicar IV direto de 3mg em 3mg, respeitando intervalos de pelo menos 5 minutos."
+                    },
+                    {
+                        name: "Diazepam (IV)",
+                        text: "Diazepam (5mg/mL)\nCada ampola tem 2mL - diluir 1 ampola em 8mL de água destilada.\nAplicar 5mL da solução, com possibilidade de repetir a dose a cada 5 - 10 minutos."
+                    }
+                ],
+                notes: "Bizu: Midazolam e Diazepam têm absorção IM ERRÁTICA - sempre preferir IV."
+            },
+            // --- Hemocomponentes ---
+            {
+                section: "Hemocomponentes",
+                title: "Concentrado de Hemácias",
+                prescriptions: [
+                    {
+                        name: "Administração",
+                        text: "Velocidade de infusão: 60-120min (ideal), Máx de 4h. Acesso venoso exclusivo. Elevação esperada de HB é de 1-1,5 mg/dl."
+                    },
+                    {
+                        name: "Irradiado",
+                        text: "Indicações: Pós TMO, Linfoma de Hodgkin, receptor parente 1º grau."
+                    },
+                    {
+                        name: "Lavado",
+                        text: "Indicações: Reação alérgica recorrente não evitada com medicamentos."
+                    },
+                    {
+                        name: "Desleucocitado",
+                        text: "Indicações: Prevenção de reação febril, politransfundidos, renal crônico candidato a transplante, prevenção de CMV."
+                    }
+                ]
+            },
+            {
+                section: "Hemocomponentes",
+                title: "Concentrado de Plaquetas",
+                prescriptions: [
+                    {
+                        name: "Dose",
+                        text: "Dose adulto: 1 unidade/10Kg."
+                    },
+                    {
+                        name: "Indicações (Contagem)",
+                        text: "• Plaquetas < 10.000\n• Plaquetas < 20.000: Paciente febril, Mucosite grave, anticoagulado.\n• Plaquetas < 50.000: Sangramento importante TGI ou GU.\n• Sangramento SNC ou oftálmico com plaquetas < 100.000."
+                    },
+                    {
+                        name: "Indicações (Procedimentos)",
+                        text: "• Acima de 50.000: EDA, broncoscopia c/ biopsia, CVC, punção lombar.\n• Acima de 100.000: Cirurgias neurológicas e oftalmológicas."
+                    }
+                ]
+            },
+            {
+                section: "Hemocomponentes",
+                title: "Crioprecipitado",
+                prescriptions: [
+                    {
+                        name: "Indicação e Dose",
+                        text: "Indicação: hipofibrinogenemia.\nCada unidade: 10-20ml.\nDose: 1 unidade/10Kg."
+                    }
+                ]
+            },
+            {
+                section: "Hemocomponentes",
+                title: "Plasma Fresco Congelado",
+                prescriptions: [
+                    {
+                        name: "Indicações",
+                        text: "• Deficiência múltipla de fatores de coagulação E sangramento ativo.\n• Prevenção de sangramento em pacientes com deficiência de fatores que serão submetidos a procedimentos invasivos (ou RNI > 1,5 ou TTPa > 1.5x)."
+                    }
+                ]
+            },
+            // --- Antimicrobianos ---
+            {
+                section: "Antimicrobianos",
+                title: "Compilado de Antimicrobianos",
+                prescriptions: [
+                    { name: "Penicilina benzatina", text: "Penicilina benzatina [Benzetacil] 1,2 milhões UI - Fazer Intramuscular." },
+                    { name: "Amoxi + Clav (500mg)", text: "Amoxicilina + Clavulanato [Clavulin®] 500 + 125mg - Tomar 1 comprimido VO de 8/8 horas." },
+                    { name: "Amoxi + Clav (875mg)", text: "Amoxicilina + Clavulanato [Clavulin®] 875 + 125mg - Tomar 1 comprimido VO de 12/12 horas." },
+                    { name: "Cefuroxima", text: "Cefuroxima [Zinnat®] 500 mg - Tomar 1 comprimido de 12/12 horas." },
+                    { name: "Ceftriaxona", text: "Ceftriaxona [Rocefim®] 1g - Aplicar 1 ampola (1g) EV de 24/24horas." },
+                    { name: "Cefepima", text: "Cefepima 1g - Administrar 1 ampola EV de 12/12 horas." },
+                    { name: "Azitromicina", text: "Azitromicina 500 mg - Tomar 1 comprimido de 24/24 horas." },
+                    { name: "Claritromicina", text: "Claritromicina 500 mg - Tomar 1 comprimido de 12/12 horas." },
+                    { name: "Ciprofloxacino (VO)", text: "Ciprofloxacino [Cipro®] 500 mg - Tomar 1 comprimido VO de 12/12 horas." },
+                    { name: "Ciprofloxacino (EV)", text: "Ciprofloxacino [Cipro®] 400mg/200ml - Administrar 1 bolsa EV 12/12 horas." },
+                    { name: "Levofloxacino (VO)", text: "Levofloxacino [Alevo®] 750 mg - Tomar 1 comprimido VO de 24/24 horas." },
+                    { name: "Levofloxacino (EV)", text: "Levofloxacino [Alevo®] 500mg/100ml - Administrar 1 bolsa EV 24/24 horas." },
+                    { name: "Fosfomicina", text: "Fosfomicina [Monouril®] (3 g/envelope) - Tomar 1 envelope VO em dose única, ao deitar." },
+                    { name: "Pipera + Tazo", text: "Piperacilina + Tazobactam [Tazocin®] 4g + 500mg - Administrar EV de 8/8 horas." },
+                    { name: "Bactrim", text: "Sulfametoxazol + Trimetoprima [Bactrim®] 800 + 160 mg - Tomar 1 comprimido VO de 12/12 horas." },
+                    { name: "Doxiciclina", text: "Doxiciclina 100 mg - Tomar 01 comprimido VO de 12/12 horas." },
+                    { name: "Meropeném", text: "Meropeném 1g - Administrar 1 ampola EV de 8/8 horas." },
+                    { name: "Metronidazol", text: "Metronidazol 400mg - Tomar 1 comprimido de 8/8h." }
+                ],
+                notes: "Seção de consulta rápida para doses comuns de antimicrobianos."
+            },
+            // --- Analgésicos ---
+            {
+                section: "Analgésicos",
+                title: "Compilado de Analgésicos",
+                prescriptions: [
+                    { name: "Dipirona (VO)", text: "Dipirona [Novalgina] 1g - Tomar 1 comprimido de 6/6h." },
+                    { name: "Paracetamol (VO)", text: "Paracetamol [Tylenol] 750g - Tomar 1 comprimido de 8/8h. (6/6h se 500mg - Dose Máx 4g)." },
+                    { name: "Ibuprofeno (VO)", text: "Ibuprofeno 400mg - Tomar 1 comprimido de até 6/6h." },
+                    { name: "Cetoprofeno (VO)", text: "Cetoprofeno 150mg - Tomar 1 comprimido de até 12/12h (máx 5 dias)." },
+                    { name: "Diclofenaco (VO)", text: "Diclofenaco 50mg - Tomar 1 comprimido de 12/12h (máx 5 dias)." },
+                    { name: "Naproxeno (VO)", text: "Naproxeno [Flanax] 500mg - Tomar 1 comprimido de até 12/12h." },
+                    { name: "Torsilax / Tandrilax (VO)", text: "Paracetamol 300 + Cafeína 30 + Carisoprodol 125 + Diclofenaco 50 - Tomar 1 comprimido de 12/12h ou 8/8h (máx 7 dias)." },
+                    { name: "Dipirona (EV)", text: "Dipirona 1g/2ml - 1 ampola - Fazer 1 ampola EV em bolus lento." },
+                    { name: "Tramadol (EV)", text: "Tramadol 100mg/2ml - 1 ampola - Diluir 1 ampola em 100 ml SF 0,9% e fazer IV em 30 min." },
+                    { name: "Cetoprofeno (EV)", text: "Cetoprofeno [Profenid] (100mg/2ml) - 1 ampola - Diluir 1 ampola em 100mL de SF 0,9% e correr em 20 minutos." },
+                    { name: "Morfina (EV)", text: "Morfina (10 mg/ml) - 1 ampola - Diluir 1 ampola em 10ml de ABD e fazer 4-5ml." }
+                ],
+                notes: "Seção de consulta rápida para doses comuns de analgésicos."
+            },
+            // --- Aminas Vasoativas ---
+            {
+                section: "Aminas Vasoativas",
+                title: "Compilado de Aminas Vasoativas",
+                prescriptions: [
+                    {
+                        name: "Noradrenalina",
+                        text: "Noradrenalina (4 mg / 4 ml-ampola)\nDiluir 5 ampolas (20 ml) em 180 ml SF 0,9% ou SG 5%.\nOU\nDiluir 8 ampolas (32mg) em 218 ml SG 5%. Fotossensível.\nDose usual: 0,05 a 2 mcg/kg/min."
+                    },
+                    {
+                        name: "Dobutamina",
+                        text: "Dobutamina (250mg/20ml) IV\nDiluir 2 ampolas (40ml) em 210 ml SF 0,9% (Conc: 2mg/ml) e infundir em BIC inicialmente a 4ml/h.\n(Dose usual: 2 a 20mcg/kg/min)."
+                    },
+                    {
+                        name: "Nitroglicerina (Tridil)",
+                        text: "Nitroglicerina (Tridil) (50mg/10ml) IV\nDiluir 1 ampola (10ml) em 240ml SF 0,9% (Conc: 200mcg/ml) e infundir em BIC inicialmente a 1-2ml/h.\nDose inicial: 5 mcg/min."
+                    },
+                    {
+                        name: "Nitroprussiato (Nipride)",
+                        text: "Nitroprussiato de Sódio (Nipride) (50 mg/2 ml)\nDiluir 1 ampola (2ml) em 248ml SF 0,9% (Conc: 200mcg/ml) e infundir em BIC inicialmente a 5ml/h.\nDose inicial: 0,25 a 0,5mcg/kg/min."
+                    },
+                    {
+                        name: "Dopamina",
+                        text: "Dopamina (50 mcg/10 ml - ampola)\nDiluir 5 ampolas + SF 0,9% ou SGI 5% 200ml (Concentração de 1.000 ug/ml)."
+                    },
+                    {
+                        name: "Vasopressina",
+                        text: "Vasopressina (20 U / ampola)\nDiluir 3 ampolas (60UI) em 57 ml de SG 5% ou SF 0,9% (Concentração de 1 U/ml).\nDose: 0,01 a 0,04 mcg/kg/min."
+                    }
+                ],
+                notes: "Seção de consulta rápida para diluições e doses de DVA."
+            },
+            // --- Intubação ---
+            {
+                section: "Intubação",
+                title: "Drogas para Intubação (SRI)",
+                prescriptions: [
+                    {
+                        name: "Fentanil (Pré-medicação)",
+                        text: "Fentanil (10ml - ampola - 50 ug/ml)\nDose: 3ug/Kg (Ex: 70kg → Fazer 4 mL da ampola IV lentamente).\n#Bizu: NÃO recomendado em pacientes chocados ou na SRI de emergência."
+                    },
+                    {
+                        name: "Escetamina (Quetamina)",
+                        text: "Escetamina (Quetamina) (10ml - ampola - 50 mg/ml)\nDose: 1,5 mg/Kg. (Cardioestável).\nEx: Paciente 70Kg → Fazer 3,0ml da ampola IV lentamente."
+                    },
+                    {
+                        name: "Etomidato",
+                        text: "Etomidato (10ml-ampola - 2 mg/ml)\nDose: 0,3 mg/Kg. (Cardioestável).\nEx: Paciente 70Kg → Fazer 10 ml da ampola IV lentamente."
+                    },
+                    {
+                        name: "Succinilcolina",
+                        text: "Succinilcolina (10mL - frasco/ampola 10 mg/ml)\nDose: 1,5 mg/Kg. Início 45s.\nEx: Paciente 70Kg → Diluir 1 ampola (100mg/10ml) em 10ml de ABD e fazer 10ml IV."
+                    },
+                    {
+                        name: "Rocurônio",
+                        text: "Rocurônio (5ml-ampola - 10 mg/ml)\nDose: 1,5mg/Kg. Início 60s.\nEx: Paciente 70Kg → Fazer 7ml da ampola IV lentamente."
+                    }
+                ]
+            },
+            {
+                section: "Intubação",
+                title: "Sedação Pós Intubação (BIC)",
+                prescriptions: [
+                    {
+                        name: "Fentanil (BIC)",
+                        text: "Fentanil 50mcg/ml-10ml / ampola\nDiluir 40ml (4 ampolas) de Fentanil em 160ml de NaCl 0,9% - Iniciar a 5-8ml/h.\nOU 4 frascos (2000mcg) PURO em BIC.\nConcentração: 0,7 a 2 mcg/kg/h."
+                    },
+                    {
+                        name: "Midazolam (BIC)",
+                        text: "Midazolam 50mg/10ml\nDiluir 40ml (4 ampolas) de Midazolam em 60ml de SF 0,9% - Iniciar a 5-8ml/h.\nConcentração: 0,02 a 0,2mg/kg/h."
+                    },
+                    {
+                        name: "Cetamina (BIC)",
+                        text: "Cetamina 50 mg/ml - ampola 10ml\nDiluir 1 ampola em 90ml de SG 5% e iniciar EV em BIC a 3-6ml/h.\nDose: 0,3 a 1 mg/kg/h."
+                    }
+                ]
+            }
+        ];
+
+        // --- ELEMENTOS DO DOM ---
+        const container = document.getElementById('prescriptions-container');
+        const searchBar = document.getElementById('search-bar');
+        const noResults = document.getElementById('no-results');
+        const toast = document.getElementById('toast');
+        let toastTimeout;
+
+        // --- FUNÇÕES ---
+
+        /**
+         * Renderiza os cards de prescrição no container, agrupados por seção.
+         * Aceita um filtro de busca.
+         */
+        function renderPrescriptions(filter = '') {
+            container.innerHTML = '';
+            const lowerFilter = filter.toLowerCase();
+            const sections = {};
+
+            const filteredData = database.filter(item => {
+                const titleMatch = item.title.toLowerCase().includes(lowerFilter);
+                const sectionMatch = item.section.toLowerCase().includes(lowerFilter);
+                const notesMatch = item.notes?.toLowerCase().includes(lowerFilter) || false;
+                const prescriptionMatch = item.prescriptions.some(p =>
+                    p.name.toLowerCase().includes(lowerFilter) ||
+                    p.text.toLowerCase().includes(lowerFilter)
+                );
+                return titleMatch || sectionMatch || notesMatch || prescriptionMatch;
+            });
+
+            // Agrupa os itens filtrados por seção
+            filteredData.forEach(item => {
+                if (!sections[item.section]) {
+                    sections[item.section] = [];
+                }
+                sections[item.section].push(item);
+            });
+
+            const sectionKeys = Object.keys(sections).sort();
+
+            // Mostra/oculta a mensagem "Nenhum resultado"
+            noResults.classList.toggle('hidden', sectionKeys.length > 0);
+
+            // Cria o HTML para cada seção e seus cards
+            sectionKeys.forEach(sectionName => {
+                // Cria o cabeçalho da seção
+                const sectionHeader = document.createElement('h2');
+                sectionHeader.className = "text-3xl font-bold mb-4 mt-8 col-span-full border-b-2 border-blue-600 pb-2 text-gray-800";
+                sectionHeader.textContent = sectionName;
+                container.appendChild(sectionHeader);
+
+                // Cria o grid para os cards da seção
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
+                sections[sectionName].forEach(item => {
+                    grid.appendChild(createPrescriptionCard(item));
+                });
+                container.appendChild(grid);
+            });
+
+            // Recria os ícones do Lucide
+            lucide.createIcons();
+        }
+
+        /**
+         * Cria e retorna um elemento HTML (card) para um item da prescrição.
+         */
+        function createPrescriptionCard(item) {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-xl shadow-lg p-5 flex flex-col h-full border border-gray-200 transition-shadow duration-300 hover:shadow-xl";
+
+            let prescriptionsHTML = '';
+            item.prescriptions.forEach(presc => {
+                // Prepara o texto para cópia (Nome + Texto)
+                const textToCopy = `${presc.name}\n${presc.text}`;
+
+                prescriptionsHTML += `
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-blue-700">${presc.name}</h4>
+                            <button
+                                class="copy-btn p-2 rounded-md text-gray-500 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                data-text="${escapeHTML(textToCopy)}"
+                                title="Copiar prescrição"
+                            >
+                                <i data-lucide="copy"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md whitespace-pre-line border border-gray-200">
+                            ${escapeHTML(presc.text)}
+                        </p>
+                    </div>
+                `;
+            });
+
+            let notesHTML = '';
+            if (item.notes) {
+                notesHTML = `
+                    <div class="mt-auto pt-4 border-t border-gray-200">
+                        <h5 class="font-semibold text-yellow-700 mb-1">#Bizu / Notas:</h5>
+                        <p class="text-sm text-gray-600 italic whitespace-pre-line">${escapeHTML(item.notes)}</p>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <h3 class="text-xl font-bold text-gray-900 mb-4">${escapeHTML(item.title)}</h3>
+                <div class="flex-grow">${prescriptionsHTML}</div>
+                ${notesHTML}
+            `;
+            return card;
+        }
+
+        /**
+         * Copia um texto para a área de transferência.
+         * Usa a técnica de fallback com textarea.
+         */
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; // Previne rolagem da tela
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Falha ao copiar texto: ', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /**
+         * Mostra a notificação "toast" por 3 segundos.
+         */
+        function showToast(message) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+
+            toast.innerHTML = ''; // Limpa o conteúdo anterior
+            // Adiciona o ícone de check
+            const icon = document.createElement('i');
+            icon.setAttribute('data-lucide', 'check-circle');
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+
+            toast.appendChild(icon);
+            toast.appendChild(text);
+            lucide.createIcons(); // recria o ícone
+
+            toast.classList.remove('toast-hide');
+            toast.classList.add('toast-show');
+
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('toast-show');
+                toast.classList.add('toast-hide');
+            }, 3000);
+        }
+
+        /**
+         * Escapa HTML para prevenir XSS.
+         */
+        function escapeHTML(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m];
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+
+        // Listener para a barra de pesquisa
+        searchBar.addEventListener('input', (e) => {
+            renderPrescriptions(e.target.value);
+        });
+
+        // Listener para os botões de copiar (usando delegação de evento)
+        container.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.copy-btn');
+            if (copyBtn) {
+                const textToCopy = copyBtn.dataset.text;
+                copyToClipboard(textToCopy);
+                showToast('Prescrição copiada!');
+            }
+        });
+
+        // Renderização inicial ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPrescriptions();
+        });
+
+    </script>
+</body>
+</html>
